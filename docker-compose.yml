@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: postgres_db
+    image: postgres:latest
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./backend/scripts/tables.sql:/docker-entrypoint-initdb.d/seed_db.sql
+    restart: always
+    env_file: ./backend/.env
+    ports:
+      - 5432:5432
+  db-viewer:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: mypassword
+    ports:
+      - 5050:80
+  app:
+    container_name: node_backend
+    build: ./backend
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/usr/src/app
+    ports:
+      - 8000:8000
+  frontend:
+    container_name: react_frontend
+    build: ./frontend
+    depends_on:
+      - app
+    volumes:
+      - ./frontend:/usr/src/app
+    ports:
+      - 5173:5173
